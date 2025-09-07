@@ -1,6 +1,6 @@
 {
-    "name": "parking_app_fluter",
-    "short_name": "parking_app_fluter",
+    "name": "hello_app",
+    "short_name": "hello_app",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
