@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
 import 'routes/app_routes.dart';
+import 'package:firebase_core/firebase_core.dart';
+Future<void> main() async {
+   WidgetsFlutterBinding.ensureInitialized();
 
-void main() {
+  // 🔹 Initialize Firebase before running the app
+  await Firebase.initializeApp();
+
   runApp(const MyApp());
 }
 
@@ -11,11 +16,11 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: "IoT Cold Storage",
+      title: "Park Ease",
       theme: ThemeData(
         primarySwatch: Colors.green,
       ),
-      initialRoute: AppRoutes.login,
+      initialRoute: AppRoutes.splash,
       routes: AppRoutes.routes,
     );
   }
