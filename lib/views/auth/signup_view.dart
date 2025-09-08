@@ -3,9 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class SignupScreen extends StatefulWidget {
   @override
@@ -14,7 +17,7 @@ class SignupScreen extends StatefulWidget {
 
 class _SignupScreenState extends State<SignupScreen> {
   final _formKey = GlobalKey<FormState>();
-
+  final storage = const FlutterSecureStorage();
   // Controllers
   TextEditingController fullNameController = TextEditingController();
   TextEditingController emailController = TextEditingController();
@@ -50,17 +53,44 @@ class _SignupScreenState extends State<SignupScreen> {
     }
   }
 
-  // Upload image to Firebase
   Future<String> uploadProfileImage() async {
     if (profileImage == null) return "";
+
     setState(() => isUploadingImage = true);
-    String downloadUrl = "dome";
 
-    setState(() {
-      isUploadingImage = false;
-    });
+    try {
+      // Unique file name
+      final fileName = 'profiles/${DateTime.now().millisecondsSinceEpoch}.jpg';
 
-    return downloadUrl;
+      // Reference to Firebase Storage
+      final storageRef = FirebaseStorage.instance.ref().child(fileName);
+
+      // Upload task
+      UploadTask uploadTask = storageRef.putFile(profileImage!);
+
+      // Track progress
+      uploadTask.snapshotEvents.listen((TaskSnapshot snapshot) {
+        double progress =
+            (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+        setState(() => uploadProgress = progress);
+      });
+
+      // Wait until upload completes
+      TaskSnapshot snapshot = await uploadTask;
+
+      // Get download URL
+      String downloadUrl = await snapshot.ref.getDownloadURL();
+
+      setState(() => isUploadingImage = false);
+
+      return downloadUrl;
+    } catch (e) {
+      setState(() => isUploadingImage = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Image upload failed: $e')),
+      );
+      return "";
+    }
   }
 
   // Send OTP
@@ -75,6 +105,9 @@ class _SignupScreenState extends State<SignupScreen> {
         body: jsonEncode({'email': emailController.text}),
       );
 
+      print("📩 OTP Response status: ${res.statusCode}");
+      print("📩 OTP Response body: ${res.body}");
+
       var data = jsonDecode(res.body);
       if (data['message'] != null) {
         setState(() {
@@ -84,9 +117,11 @@ class _SignupScreenState extends State<SignupScreen> {
           SnackBar(content: Text('OTP sent to your email!')),
         );
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
+      print("Google Sign-In Error: $e");
+      print(stackTrace);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to send OTP.')),
+        SnackBar(content: Text('Google Sign-In failed: $e')),
       );
     } finally {
       setState(() => isSendingOtp = false);
@@ -131,6 +166,34 @@ class _SignupScreenState extends State<SignupScreen> {
     }
   }
 
+  /// Simple dialog for password input
+  Future<String?> _askPasswordDialog(BuildContext context) async {
+    TextEditingController controller = TextEditingController();
+    return showDialog<String>(
+      context: context,
+      builder: (ctx) {
+        return AlertDialog(
+          title: const Text("Set Password"),
+          content: TextField(
+            controller: controller,
+            obscureText: true,
+            decoration: const InputDecoration(hintText: "Enter password"),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text("Cancel"),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(ctx, controller.text.trim()),
+              child: const Text("Submit"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   // Register user
   Future<void> registerUser() async {
     if (!_formKey.currentState!.validate()) return;
@@ -158,6 +221,9 @@ class _SignupScreenState extends State<SignupScreen> {
         }),
       );
 
+      print("📩 Response status: ${res.statusCode}");
+      print("📩 Response body: ${res.body}");
+
       var data = jsonDecode(res.body);
       if (res.statusCode == 200) {
         SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -173,9 +239,11 @@ class _SignupScreenState extends State<SignupScreen> {
           SnackBar(content: Text(data['message'] ?? 'Registration failed.')),
         );
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
+      print("❌ Error registering user: $e");
+      print("Stack trace: $stackTrace");
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error registering user.')),
+        SnackBar(content: Text('Error registering user: $e')),
       );
     } finally {
       setState(() => isRegistering = false);
@@ -183,15 +251,87 @@ class _SignupScreenState extends State<SignupScreen> {
   }
 
   // Google Sign-In
+
   Future<void> googleSignIn() async {
     try {
-      // Using Firebase Auth Google sign-in flow
-      // You need google_sign_in package here
-      // final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
-      // Implement backend verification if needed
+      final GoogleSignIn _googleSignIn = GoogleSignIn(
+        scopes: ['email'],
+      );
+
+      // Trigger Google sign-in
+      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+
+      if (googleUser == null) {
+        // User cancelled
+        return;
+      }
+
+      // ✅ Extract info
+      String? email = googleUser.email;
+      String? name = googleUser.displayName;
+      String? photoUrl = googleUser.photoUrl;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Email: $email\nName: $name")),
+      );
+
+      // 🔹 Step 1: Check if user already exists
+      final checkRes = await http.get(
+        Uri.parse("$backendUrl/email/$email"),
+      );
+
+      bool isNewUser = true;
+      if (checkRes.statusCode == 200) {
+        isNewUser = false;
+      }
+
+      String? password;
+      if (isNewUser) {
+        // 🔹 Ask user for password if new
+        password = await _askPasswordDialog(context);
+        if (password == null || password.isEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Password is required to continue.")),
+          );
+          return;
+        }
+      }
+
+      // 🔹 Step 2: Prepare user data
+      final userData = {
+        "name": name,
+        "email": email,
+        "photo": photoUrl,
+        "password": password // only for new users
+      };
+
+      // 🔹 Step 3: Send to backend for login/signup
+      final res = await http.post(
+        Uri.parse("$backendUrl/google-login"),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode(userData),
+      );
+
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body);
+        final token = data["token"];
+        final user = data["user"];
+
+        // Save
+        await storage.write(key: "token", value: token);
+        await storage.write(key: "user", value: jsonEncode(user));
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Login successful ✅")),
+        );
+
+        // Navigate to home
+        Navigator.pushReplacementNamed(context, "/dashboard");
+
+      }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Google Sign-In failed.')),
+        SnackBar(content: Text('Google Sign-In failed: $e')),
       );
     }
   }
