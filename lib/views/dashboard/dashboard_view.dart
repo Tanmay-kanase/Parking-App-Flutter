@@ -1,5 +1,12 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:hello_app/views/profile/profile_view.dart';
+import 'package:hello_app/views/splash/splash_view.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:hello_app/views/profile/profile_view.dart';
+
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 // Main dashboard widget
 class Dashboard extends StatefulWidget {
@@ -12,6 +19,22 @@ class Dashboard extends StatefulWidget {
 class _ModernDashboardState extends State<Dashboard> {
   int _selectedIndex = 0;
   bool _darkMode = false;
+
+// Helper method to build the home screen UI
+  Widget _buildHomeView() {
+    return ListView(
+      padding: const EdgeInsets.all(16.0),
+      children: [
+        _buildWelcomeHeader(),
+        const SizedBox(height: 24),
+        _buildFindParkingCard(),
+        const SizedBox(height: 24),
+        _buildQuickActions(),
+        const SizedBox(height: 24),
+        _buildRecentBookings(),
+      ],
+    );
+  }
 
   // --- MOCK DATA ---
   // Data for the bottom navigation bar
@@ -274,6 +297,50 @@ class _ModernDashboardState extends State<Dashboard> {
     );
   }
 
+  // --- Building pages --- //
+  Widget _buildPage(int index) {
+    switch (index) {
+      // case 0:
+      //   return ProfileView();
+      // case 1:
+      //   return const BookingView();
+      // case 2:
+      //   return const History(); // 👈 navigate to Profile
+
+      case 3: // Profile tab index
+        return FutureBuilder(
+          future: () async {
+            const storage = FlutterSecureStorage();
+
+            // Read stored user object (string)
+            final userString = await storage.read(key: 'user');
+            final token = await storage.read(key: 'token');
+
+            if (userString == null || token == null) return null;
+
+            final user = jsonDecode(userString); // 👈 parse JSON string
+            return {"userId": user["userId"], "token": token};
+          }(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            if (!snapshot.hasData) {
+              return const Center(child: Text("No user session found"));
+            }
+
+            final data = snapshot.data!;
+            return ProfileView(
+              userId: data["userId"],
+              token: data["token"],
+            );
+          },
+        );
+      default:
+        return _buildHomeView(); // Fallback to home view
+    }
+  }
+
   // --- MAIN BUILD METHOD ---
   @override
   Widget build(BuildContext context) {
@@ -303,18 +370,7 @@ class _ModernDashboardState extends State<Dashboard> {
             const SizedBox(width: 16),
           ],
         ),
-        body: ListView(
-          padding: const EdgeInsets.all(16.0),
-          children: [
-            _buildWelcomeHeader(),
-            const SizedBox(height: 24),
-            _buildFindParkingCard(),
-            const SizedBox(height: 24),
-            _buildQuickActions(),
-            const SizedBox(height: 24),
-            _buildRecentBookings(),
-          ],
-        ),
+        body: _buildPage(_selectedIndex),
         bottomNavigationBar: BottomNavigationBar(
           items: _navItems
               .map((item) => BottomNavigationBarItem(

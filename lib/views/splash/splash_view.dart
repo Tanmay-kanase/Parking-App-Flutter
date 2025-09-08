@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../../routes/app_routes.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class SplashView extends StatefulWidget {
   const SplashView({super.key});
@@ -30,10 +30,10 @@ class _SplashViewState extends State<SplashView>
 
     // Wait for 3 seconds then redirect
     Timer(const Duration(seconds: 3), () async {
-      final prefs = await SharedPreferences.getInstance();
-      final isLoggedIn = false;
+      const storage = FlutterSecureStorage();
+      final user = await storage.read(key: 'user');
 
-      if (isLoggedIn) {
+      if (user != null) {
         Navigator.pushReplacementNamed(context, AppRoutes.dashboard);
       } else {
         Navigator.pushReplacementNamed(context, AppRoutes.login);
