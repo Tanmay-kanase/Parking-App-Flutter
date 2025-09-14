@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -7,6 +8,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import '../../routes/app_routes.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
@@ -44,6 +46,7 @@ class _SignupScreenState extends State<SignupScreen> {
   // Pick Image
   Future<void> pickImage() async {
     final picker = ImagePicker();
+
     final pickedFile =
         await picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
     if (pickedFile != null) {
@@ -51,45 +54,89 @@ class _SignupScreenState extends State<SignupScreen> {
         profileImage = File(pickedFile.path);
       });
     }
+    print("📁 Uploading from path: ${profileImage!.path}");
+    print("⚡ Firebase initialized? ${Firebase.apps.isNotEmpty}");
   }
 
   Future<String> uploadProfileImage() async {
-    if (profileImage == null) return "";
+    if (profileImage == null) {
+      print("⚠️ No image selected. Skipping upload.");
+      return "";
+    }
 
     setState(() => isUploadingImage = true);
+    print("🚀 Starting image upload...");
 
     try {
       // Unique file name
       final fileName = 'profiles/${DateTime.now().millisecondsSinceEpoch}.jpg';
+      print("📂 File name: $fileName");
 
       // Reference to Firebase Storage
       final storageRef = FirebaseStorage.instance.ref().child(fileName);
+      print("🔗 Storage ref created: ${storageRef.fullPath}");
+
+      // ✅ Add metadata to avoid null crash
+      final metadata = SettableMetadata(contentType: 'image/jpeg');
 
       // Upload task
-      UploadTask uploadTask = storageRef.putFile(profileImage!);
+      print("⬆️ Upload task started...");
+      UploadTask uploadTask = storageRef.putFile(profileImage!, metadata);
 
       // Track progress
       uploadTask.snapshotEvents.listen((TaskSnapshot snapshot) {
         double progress =
             (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
         setState(() => uploadProgress = progress);
+        print(
+            "📊 Progress: ${progress.toStringAsFixed(2)}% | State: ${snapshot.state}");
+      }, onError: (e) {
+        print("❌ Upload error inside snapshotEvents: $e");
       });
 
       // Wait until upload completes
       TaskSnapshot snapshot = await uploadTask;
+      print("✅ Upload finished. State: ${snapshot.state}");
 
       // Get download URL
       String downloadUrl = await snapshot.ref.getDownloadURL();
+      print("🌐 Download URL: $downloadUrl");
 
       setState(() => isUploadingImage = false);
-
       return downloadUrl;
-    } catch (e) {
+    } catch (e, st) {
+      print("❌ Exception during upload: $e");
+      print("📜 StackTrace: $st");
+
       setState(() => isUploadingImage = false);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Image upload failed: $e')),
       );
       return "";
+    }
+  }
+
+  Future<void> debugUploadCheck() async {
+    if (profileImage == null) {
+      print("❌ No image selected");
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please select an image first")),
+      );
+      return;
+    }
+
+    String url = await uploadProfileImage();
+
+    if (url.isNotEmpty) {
+      print("✅ Image uploaded successfully: $url");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Image uploaded successfully ✅")),
+      );
+    } else {
+      print("❌ Image upload failed");
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Image upload failed ❌")),
+      );
     }
   }
 
@@ -326,8 +373,7 @@ class _SignupScreenState extends State<SignupScreen> {
         );
 
         // Navigate to home
-        Navigator.pushReplacementNamed(context, "/dashboard");
-
+        Navigator.pushReplacementNamed(context, AppRoutes.dashboard);
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -379,21 +425,26 @@ class _SignupScreenState extends State<SignupScreen> {
               SizedBox(height: 15),
 
               // Profile Image Picker
+
               Row(
                 children: [
                   ElevatedButton(
                     onPressed: pickImage,
                     child: Text("Pick Profile Image"),
                   ),
-                  SizedBox(width: 10),
-                  profileImage != null
-                      ? Text(profileImage!.path.split('/').last)
-                      : Text("No file chosen"),
+                  // SizedBox(width: 10),
+                  // profileImage != null
+                  //     ? Text(profileImage!.path.split('/').last)
+                  //     : Text("No file chosen"),
                 ],
               ),
               if (isUploadingImage)
                 LinearProgressIndicator(value: uploadProgress / 100),
               SizedBox(height: 15),
+              ElevatedButton(
+                onPressed: debugUploadCheck,
+                child: Text("Test Upload"),
+              ),
 
               // Email + OTP
               Row(

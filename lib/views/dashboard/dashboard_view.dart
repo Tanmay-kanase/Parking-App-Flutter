@@ -1,11 +1,9 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:hello_app/views/profile/profile_view.dart';
-import 'package:hello_app/views/splash/splash_view.dart';
+import 'package:parking_app_flutter/views/profile/profile_view.dart';
+import 'package:parking_app_flutter/views/splash/splash_view.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-import 'package:hello_app/views/profile/profile_view.dart';
-
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 // Main dashboard widget
