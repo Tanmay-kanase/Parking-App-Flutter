@@ -3,7 +3,14 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:parking_app_flutter/views/profile/profile_view.dart';
 import 'package:parking_app_flutter/views/splash/splash_view.dart';
+<<<<<<< HEAD
 import 'package:lucide_icons/lucide_icons.dart';
+=======
+import 'package:parking_app_flutter/views/parking/show_nearby_parkings.dart';
+import 'package:lucide_icons/lucide_icons.dart';
+import 'package:parking_app_flutter/views/profile/profile_view.dart';
+import 'package:geolocator/geolocator.dart';
+>>>>>>> cd08386 (Signup UI , dashboard button to navigate show nearby parkings)
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 // Main dashboard widget
@@ -32,6 +39,57 @@ class _ModernDashboardState extends State<Dashboard> {
         _buildRecentBookings(),
       ],
     );
+  }
+
+  Future<void> _findAndShowNearbyParkings() async {
+    // Show a loading indicator while we get the location
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Getting your location...")),
+    );
+
+    try {
+      // 1. Check for location permissions
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Location permissions are denied.")),
+          );
+          return;
+        }
+      }
+
+      // 2. Get current position
+      Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+
+      // 3. Navigate to the new screen with the location data
+      // Assuming you have a search controller, e.g., _searchController
+      // If not, you can pass a default name for the location.
+      String searchLocationName =
+          "Your Location"; // Replace with your search query if available
+
+      if (mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ShowNearbyParkingsScreen(
+              lat: position.latitude,
+              lng: position.longitude,
+              searchLocation: searchLocationName,
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      print("Error getting location: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text("Failed to get location. Please enable GPS.")),
+      );
+    }
   }
 
   // --- MOCK DATA ---
@@ -184,7 +242,8 @@ class _ModernDashboardState extends State<Dashboard> {
             ),
             const SizedBox(width: 12),
             IconButton(
-              onPressed: () {/* Handle filter */},
+              // The existing onPressed is replaced with our new function
+              onPressed: _findAndShowNearbyParkings,
               icon: const Icon(LucideIcons.slidersHorizontal,
                   color: Colors.white),
               style: IconButton.styleFrom(

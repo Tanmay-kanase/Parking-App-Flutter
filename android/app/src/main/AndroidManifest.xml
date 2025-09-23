@@ -1,6 +1,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <application
+<<<<<<< HEAD
         android:label="Park Ease"
+=======
+        android:label="parking_app"
+>>>>>>> cd08386 (Signup UI , dashboard button to navigate show nearby parkings)
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

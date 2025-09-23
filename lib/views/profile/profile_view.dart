@@ -88,205 +88,293 @@ class _ProfileViewState extends State<ProfileView> {
 
   @override
   Widget build(BuildContext context) {
+    // Define a modern color scheme
+    final theme = Theme.of(context);
+    final isDarkMode = theme.brightness == Brightness.dark;
+    final backgroundColor = isDarkMode ? Colors.black : const Color(0xFFF7F8FC);
+    final headerColor = isDarkMode ? const Color(0xFF1E1E1E) : Colors.indigo;
+    final cardColor = isDarkMode ? const Color(0xFF2C2C2E) : Colors.white;
+
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: backgroundColor,
+      appBar: AppBar(
+        title: const Text("My Profile",
+            style: TextStyle(fontWeight: FontWeight.bold)),
+        backgroundColor: headerColor,
+        foregroundColor: Colors.white,
+        elevation: 0,
+        actions: [
+          // Moved Edit Profile to the AppBar for a cleaner look
+          if (!_isLoading && _error == null)
+            IconButton(
+              icon: const Icon(LucideIcons.edit),
+              onPressed: _onEditProfile,
+              tooltip: "Edit Profile",
+            ),
+        ],
+      ),
       body: SafeArea(
-        // Handle the different UI states: loading, error, and success.
         child: _isLoading
             ? const Center(child: CircularProgressIndicator())
             : _error != null
-                ? Center(child: Text(_error!, textAlign: TextAlign.center))
+                ? Center(
+                    child: Padding(
+                    padding: const EdgeInsets.all(20.0),
+                    child: Text(_error!, textAlign: TextAlign.center),
+                  ))
                 : _userData == null
                     ? const Center(child: Text("No user data available."))
-                    : _buildProfileContent(),
+                    // Stack the header color behind the scrollable content
+                    : Stack(
+                        children: [
+                          Container(height: 100, color: headerColor),
+                          _buildProfileContent(cardColor),
+                        ],
+                      ),
       ),
     );
   }
 
-  // Builds the main profile content once data is successfully loaded.
-  Widget _buildProfileContent() {
-    // Safely extract data from the _userData map.
+  Widget _buildProfileContent(Color cardColor) {
     final user = _userData ?? {};
     final vehicles = List<Map<String, dynamic>>.from(user['vehicles'] ?? []);
     final parkings = List<Map<String, dynamic>>.from(user['parkings'] ?? []);
 
     return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildProfileHeader(user),
-          Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              children: [
-                _buildInfoRow("Phone", user["phone"] ?? "Not Provided"),
-                _buildInfoRow(
-                    "Role", (user["role"] ?? "user").toString().toUpperCase()),
-                const SizedBox(height: 20),
-
-                // Conditionally display the "My Vehicles" section.
-                if (user["role"] == "user") _buildVehiclesSection(vehicles),
-
-                // Conditionally display the "My Parkings" section.
-                if (user["role"] == "parking host")
-                  _buildParkingsSection(parkings),
-
-                const SizedBox(height: 30),
-                _buildActionButtons(),
-              ],
-            ),
-          ),
+          _buildProfileHeader(user, cardColor),
+          const SizedBox(height: 24),
+          _buildInfoTiles(user, cardColor),
+          const SizedBox(height: 24),
+          if (user["role"] == "user")
+            _buildVehiclesSection(vehicles, cardColor),
+          if (user["role"] == "parking host")
+            _buildParkingsSection(parkings, cardColor),
+          const SizedBox(height: 24),
+          _buildLogoutButton(),
+          const SizedBox(height: 20),
         ],
       ),
     );
   }
 
-  // --- Reusable UI Component Widgets ---
+  // --- Re-styled UI Component Widgets ---
 
-  Widget _buildProfileHeader(Map<String, dynamic> user) {
+  Widget _buildProfileHeader(Map<String, dynamic> user, Color cardColor) {
     return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 30, horizontal: 20),
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Color(0xFFFFC107), Color(0xFFFF9800)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.only(
-          bottomLeft: Radius.circular(40),
-          bottomRight: Radius.circular(40),
-        ),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: cardColor,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 15,
+            offset: const Offset(0, 5),
+          )
+        ],
       ),
       child: Column(
         children: [
           CircleAvatar(
-            radius: 60,
-            backgroundImage: NetworkImage(user["photo"] ?? ""),
-            onBackgroundImageError: (_, __) {}, // Handle image load error
-            backgroundColor: Colors.white,
+            radius: 55,
+            backgroundColor: Colors.indigo.shade50,
+            child: CircleAvatar(
+              radius: 50,
+              backgroundImage: NetworkImage(user["photo"] ?? ""),
+              onBackgroundImageError: (_, __) {},
+              backgroundColor: Colors.grey.shade200,
+            ),
           ),
           const SizedBox(height: 16),
           Text(
             user["name"] ?? "Unknown User",
-            style: const TextStyle(
-              fontSize: 26,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
           ),
+          const SizedBox(height: 4),
           Text(
             user["email"] ?? "No email",
-            style: const TextStyle(fontSize: 16, color: Colors.white70),
+            style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildVehiclesSection(List<Map<String, dynamic>> vehicles) {
-    return Column(
+  Widget _buildInfoTiles(Map<String, dynamic> user, Color cardColor) {
+    return Row(
       children: [
-        _buildSectionTitle("My Vehicles", LucideIcons.car),
-        const SizedBox(height: 10),
+        Expanded(
+          child: _buildInfoCard(
+            icon: LucideIcons.phone,
+            label: "Phone",
+            value: user["phone"] ?? "Not Provided",
+            color: Colors.blue,
+            cardColor: cardColor,
+          ),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: _buildInfoCard(
+            icon: LucideIcons.userCircle2,
+            label: "Role",
+            value: (user["role"] ?? "user").toString().toUpperCase(),
+            color: Colors.green,
+            cardColor: cardColor,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildInfoCard({
+    required IconData icon,
+    required String label,
+    required String value,
+    required Color color,
+    required Color cardColor,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: cardColor,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 10,
+          )
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          CircleAvatar(
+            radius: 20,
+            backgroundColor: color.withOpacity(0.1),
+            child: Icon(icon, color: color, size: 22),
+          ),
+          const SizedBox(height: 12),
+          Text(label, style: TextStyle(color: Colors.grey.shade500)),
+          const SizedBox(height: 4),
+          Text(value,
+              style:
+                  const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSectionTitle(String title) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8.0, left: 4.0),
+      child: Text(
+        title,
+        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+      ),
+    );
+  }
+
+  Widget _buildVehiclesSection(
+      List<Map<String, dynamic>> vehicles, Color cardColor) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSectionTitle("My Vehicles"),
         vehicles.isNotEmpty
-            ? Column(
-                children: vehicles.map((v) {
-                  return _buildCard(
+            ? ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: vehicles.length,
+                itemBuilder: (context, index) {
+                  final v = vehicles[index];
+                  return _buildListCard(
                     title: v["vehicleType"] ?? "Unknown Vehicle",
                     subtitle:
                         "Plate: ${v["licensePlate"]}\nCompany: ${v["company"] ?? "N/A"}",
                     icon: LucideIcons.car,
+                    cardColor: cardColor,
                   );
-                }).toList(),
+                },
               )
-            : const Text("No vehicles added yet.",
-                style: TextStyle(color: Colors.grey)),
-        const SizedBox(height: 20),
+            : const Center(
+                child: Padding(
+                padding: EdgeInsets.all(20.0),
+                child: Text("No vehicles added yet.",
+                    style: TextStyle(color: Colors.grey)),
+              )),
       ],
     );
   }
 
-  Widget _buildParkingsSection(List<Map<String, dynamic>> parkings) {
+  Widget _buildParkingsSection(
+      List<Map<String, dynamic>> parkings, Color cardColor) {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSectionTitle("My Parkings", LucideIcons.mapPin),
-        const SizedBox(height: 10),
+        _buildSectionTitle("My Parkings"),
         parkings.isNotEmpty
-            ? Column(
-                children: parkings.map((p) {
-                  return _buildCard(
+            ? ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: parkings.length,
+                itemBuilder: (context, index) {
+                  final p = parkings[index];
+                  return _buildListCard(
                     title: p["name"] ?? "Unnamed Parking",
                     subtitle:
                         "Location: ${p["address"]}, ${p["city"]}\nTotal Slots: ${p["totalSlots"]}",
                     icon: LucideIcons.parkingCircle,
+                    cardColor: cardColor,
                     onTap: () {
-                      // TODO: Navigate to parking details/management screen
+                      // Your navigation logic here
                     },
                   );
-                }).toList(),
+                },
               )
-            : const Text("No parkings found.",
-                style: TextStyle(color: Colors.grey)),
-        const SizedBox(height: 20),
+            : const Center(
+                child: Padding(
+                padding: EdgeInsets.all(20.0),
+                child: Text("No parkings found.",
+                    style: TextStyle(color: Colors.grey)),
+              )),
       ],
     );
   }
 
-  Widget _buildActionButtons() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        _buildButton("Edit Profile", Colors.blue, _onEditProfile),
-        const SizedBox(width: 20),
-        _buildButton("Logout", Colors.red, _onLogout),
-      ],
-    );
-  }
-
-  Widget _buildInfoRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        children: [
-          Text("$label: ",
-              style:
-                  const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-          Expanded(child: Text(value, style: const TextStyle(fontSize: 16))),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSectionTitle(String title, IconData icon) {
-    return Row(
-      children: [
-        Icon(icon, color: Colors.orange, size: 22),
-        const SizedBox(width: 8),
-        Text(title,
-            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-      ],
-    );
-  }
-
-  Widget _buildCard({
+  Widget _buildListCard({
     required String title,
     required String subtitle,
     required IconData icon,
+    required Color cardColor,
     VoidCallback? onTap,
   }) {
-    return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      elevation: 4,
-      margin: const EdgeInsets.symmetric(vertical: 8),
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 6),
+      decoration: BoxDecoration(
+        color: cardColor,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 10,
+          )
+        ],
+      ),
       child: ListTile(
         onTap: onTap,
-        contentPadding: const EdgeInsets.all(16),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
         leading: CircleAvatar(
-          backgroundColor: Colors.orange[100],
-          child: Icon(icon, color: Colors.deepOrange),
+          backgroundColor: Colors.indigo.withOpacity(0.1),
+          child: Icon(icon, color: Colors.indigo.shade600, size: 22),
         ),
         title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
-        subtitle: Text(subtitle, style: const TextStyle(color: Colors.black54)),
+        subtitle: Text(subtitle, style: TextStyle(color: Colors.grey.shade600)),
         trailing: onTap != null
             ? const Icon(Icons.arrow_forward_ios, size: 16)
             : null,
@@ -294,17 +382,17 @@ class _ProfileViewState extends State<ProfileView> {
     );
   }
 
-  Widget _buildButton(String text, Color color, VoidCallback onPressed) {
-    return ElevatedButton(
-      style: ElevatedButton.styleFrom(
-        foregroundColor: Colors.white,
-        backgroundColor: color,
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+  Widget _buildLogoutButton() {
+    return OutlinedButton.icon(
+      icon: const Icon(LucideIcons.logOut, size: 20),
+      label: const Text("Logout"),
+      onPressed: _onLogout,
+      style: OutlinedButton.styleFrom(
+        foregroundColor: Colors.red.shade700,
+        minimumSize: const Size(double.infinity, 50),
+        side: BorderSide(color: Colors.red.withOpacity(0.3)),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
-      onPressed: onPressed,
-      child: Text(text,
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
     );
   }
 }

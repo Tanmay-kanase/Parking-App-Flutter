@@ -37,7 +37,8 @@ class _SignupScreenState extends State<SignupScreen> {
   bool isRegistering = false;
   bool isUploadingImage = false;
   double uploadProgress = 0;
-
+// Add this with your other state variables
+  bool termsAccepted = false;
   File? profileImage;
 
   // Backend URL
@@ -280,7 +281,8 @@ class _SignupScreenState extends State<SignupScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Account created successfully!')),
         );
-        Navigator.pop(context); // Or navigate to home
+        Navigator.pushReplacementNamed(
+            context, "/dashboard"); // Or navigate to home
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(data['message'] ?? 'Registration failed.')),
@@ -373,7 +375,11 @@ class _SignupScreenState extends State<SignupScreen> {
         );
 
         // Navigate to home
+<<<<<<< HEAD
         Navigator.pushReplacementNamed(context, AppRoutes.dashboard);
+=======
+        Navigator.pushReplacementNamed(context, "/dashboard");
+>>>>>>> cd08386 (Signup UI , dashboard button to navigate show nearby parkings)
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -382,43 +388,33 @@ class _SignupScreenState extends State<SignupScreen> {
     }
   }
 
+// --- BUILD METHOD ---
   @override
   Widget build(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
 
     return Scaffold(
-      body: SingleChildScrollView(
-        padding: EdgeInsets.all(16),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            children: [
-              SizedBox(height: 50),
-              Text(
-                "Create Your Account",
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: isDarkMode ? Colors.white : Colors.black,
-                ),
-              ),
-              SizedBox(height: 10),
-              Text(
-                "Join us to get started on your journey!",
-                style: TextStyle(
-                  fontSize: 16,
-                  color: isDarkMode ? Colors.grey[300] : Colors.grey[700],
-                ),
-              ),
-              SizedBox(height: 30),
-
-              // Full Name
-              TextFormField(
-                controller: fullNameController,
-                decoration: InputDecoration(
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _buildHeader(isDarkMode),
+                const SizedBox(height: 32),
+                _buildImageUploader(),
+                const SizedBox(height: 32),
+                _buildTextFormField(
+                  controller: fullNameController,
                   labelText: "Full Name",
-                  prefixIcon: Icon(Icons.person),
+                  prefixIcon: Icons.person_outline,
+                  validator: (value) =>
+                      value!.isEmpty ? "Please enter your full name" : null,
                 ),
+<<<<<<< HEAD
                 validator: (value) =>
                     value!.isEmpty ? "Please enter your full name" : null,
               ),
@@ -500,91 +496,377 @@ class _SignupScreenState extends State<SignupScreen> {
                 controller: passwordController,
                 obscureText: true,
                 decoration: InputDecoration(
+=======
+                const SizedBox(height: 16),
+                _buildEmailAndOtpSection(),
+                if (otpVisible && !otpVerified) ...[
+                  const SizedBox(height: 16),
+                  _buildOtpVerificationSection(),
+                ],
+                const SizedBox(height: 16),
+                _buildTextFormField(
+                  controller: passwordController,
+>>>>>>> cd08386 (Signup UI , dashboard button to navigate show nearby parkings)
                   labelText: "Password",
-                  prefixIcon: Icon(Icons.lock),
+                  prefixIcon: Icons.lock_outline,
+                  obscureText: true,
+                  validator: (value) => value!.length < 8
+                      ? "Password must be at least 8 characters"
+                      : null,
                 ),
-                validator: (value) => value!.length < 8
-                    ? "Password must be at least 8 characters"
-                    : null,
-              ),
-              SizedBox(height: 15),
-
-              // Confirm Password
-              TextFormField(
-                controller: confirmPasswordController,
-                obscureText: true,
-                decoration: InputDecoration(
+                const SizedBox(height: 16),
+                _buildTextFormField(
+                  controller: confirmPasswordController,
                   labelText: "Confirm Password",
-                  prefixIcon: Icon(Icons.lock),
+                  prefixIcon: Icons.lock_outline,
+                  obscureText: true,
+                  validator: (value) => value != passwordController.text
+                      ? "Passwords do not match"
+                      : null,
                 ),
-                validator: (value) => value != passwordController.text
-                    ? "Passwords do not match"
-                    : null,
-              ),
-              SizedBox(height: 15),
-
-              // Phone
-              TextFormField(
-                controller: phoneController,
-                keyboardType: TextInputType.phone,
-                decoration: InputDecoration(
+                const SizedBox(height: 16),
+                _buildTextFormField(
+                  controller: phoneController,
                   labelText: "Phone Number",
-                  prefixIcon: Icon(Icons.phone),
+                  prefixIcon: Icons.phone_outlined,
+                  keyboardType: TextInputType.phone,
+                  validator: (value) => value!.length != 10
+                      ? "Phone number must be 10 digits"
+                      : null,
                 ),
-                validator: (value) => value!.length != 10
-                    ? "Phone number must be 10 digits"
-                    : null,
-              ),
-              SizedBox(height: 15),
-
-              // Role dropdown
-              DropdownButtonFormField<String>(
-                value: role,
-                hint: Text("Select Your Role"),
-                items: [
-                  DropdownMenuItem(value: "user", child: Text("User")),
-                  DropdownMenuItem(
-                      value: "parking_owner", child: Text("Parking Owner")),
-                ],
-                onChanged: (val) => setState(() => role = val),
-                validator: (value) =>
-                    value == null ? "Please select a role" : null,
-              ),
-              SizedBox(height: 15),
-
-              // Terms checkbox
-              Row(
-                children: [
-                  Checkbox(value: true, onChanged: (_) {}),
-                  Expanded(
-                    child: Text(
-                      "I agree to the Terms of Service and Privacy Policy",
-                      style: TextStyle(fontSize: 12),
-                    ),
-                  ),
-                ],
-              ),
-
-              SizedBox(height: 20),
-              ElevatedButton(
-                onPressed:
-                    isRegistering || isUploadingImage ? null : registerUser,
-                child: isRegistering
-                    ? CircularProgressIndicator(color: Colors.white)
-                    : Text("Create Account"),
-                style: ElevatedButton.styleFrom(
-                    minimumSize: Size(double.infinity, 50)),
-              ),
-              SizedBox(height: 10),
-              TextButton(
-                onPressed: googleSignIn,
-                child: Text("Sign in with Google"),
-              ),
-              SizedBox(height: 30),
-            ],
+                const SizedBox(height: 16),
+                _buildRoleDropdown(theme),
+                const SizedBox(height: 20),
+                _buildTermsAndConditions(theme),
+                const SizedBox(height: 24),
+                _buildCreateAccountButton(),
+                const SizedBox(height: 16),
+                _buildSocialSignIn(isDarkMode),
+              ],
+            ),
           ),
         ),
       ),
+    );
+  }
+
+  // --- WIDGET BUILDER METHODS ---
+
+  Widget _buildHeader(bool isDarkMode) {
+    return Column(
+      children: [
+        Text(
+          "Create Your Account",
+          textAlign: TextAlign.center,
+          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: isDarkMode ? Colors.white : Colors.black87,
+              ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          "Join us to get started on your journey!",
+          textAlign: TextAlign.center,
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
+              ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildImageUploader() {
+    return Column(
+      children: [
+        Stack(
+          alignment: Alignment.center,
+          children: [
+            SizedBox(
+              width: 130,
+              height: 130,
+              // The progress indicator is only visible during upload
+              child: isUploadingImage
+                  ? TweenAnimationBuilder<double>(
+                      tween: Tween(begin: 0, end: uploadProgress / 100),
+                      duration: const Duration(milliseconds: 300),
+                      builder: (context, value, child) {
+                        return CircularProgressIndicator(
+                          value: value,
+                          strokeWidth: 5,
+                          color: Colors.green,
+                          backgroundColor: Colors.grey.withOpacity(0.3),
+                        );
+                      },
+                    )
+                  : null,
+            ),
+            CircleAvatar(
+              radius: 60,
+              backgroundColor: Theme.of(context).colorScheme.secondaryContainer,
+              backgroundImage:
+                  profileImage != null ? FileImage(profileImage!) : null,
+              child: profileImage == null
+                  ? Icon(
+                      Icons.person,
+                      size: 60,
+                      color: Theme.of(context).colorScheme.onSecondaryContainer,
+                    )
+                  : null,
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        TextButton.icon(
+          onPressed: pickImage, // This calls your existing pickImage function
+          icon: Icon(profileImage == null
+              ? Icons.add_a_photo_outlined
+              : Icons.edit_outlined),
+          label: Text(profileImage == null ? "Upload Photo" : "Change Photo"),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTextFormField({
+    required TextEditingController controller,
+    required String labelText,
+    required IconData prefixIcon,
+    String? Function(String?)? validator,
+    bool obscureText = false,
+    TextInputType? keyboardType,
+    bool enabled = true,
+  }) {
+    return TextFormField(
+      controller: controller,
+      obscureText: obscureText,
+      keyboardType: keyboardType,
+      enabled: enabled,
+      decoration: InputDecoration(
+        labelText: labelText,
+        prefixIcon: Icon(prefixIcon, size: 20),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+        filled: true,
+        fillColor: Theme.of(context).colorScheme.surface.withAlpha(150),
+        contentPadding:
+            const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+      ),
+      validator: validator,
+    );
+  }
+
+  Widget _buildEmailAndOtpSection() {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: _buildTextFormField(
+            controller: emailController,
+            labelText: "Email",
+            prefixIcon: Icons.email_outlined,
+            enabled: !otpVerified && !isSendingOtp && !isVerifyingOtp,
+            validator: (value) => value!.isEmpty ? "Please enter email" : null,
+          ),
+        ),
+        const SizedBox(width: 10),
+        Padding(
+          padding:
+              const EdgeInsets.only(top: 5.0), // Align with text field content
+          child: ElevatedButton(
+            onPressed: otpVerified || isSendingOtp || isVerifyingOtp
+                ? null
+                : sendOtp, // Calls your sendOtp function
+            style: ElevatedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: isSendingOtp
+                ? const SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(
+                        color: Colors.white, strokeWidth: 2))
+                : Text(otpVerified ? "Verified ✓" : "Send OTP"),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildOtpVerificationSection() {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: _buildTextFormField(
+            controller: otpController,
+            labelText: "Enter OTP",
+            prefixIcon: Icons.pin_outlined,
+            keyboardType: TextInputType.number,
+          ),
+        ),
+        const SizedBox(width: 10),
+        Padding(
+          padding: const EdgeInsets.only(top: 5.0),
+          child: ElevatedButton(
+            onPressed: isVerifyingOtp || isSendingOtp
+                ? null
+                : verifyOtp, // Calls your verifyOtp function
+            style: ElevatedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: isVerifyingOtp
+                ? const SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(
+                        color: Colors.white, strokeWidth: 2))
+                : const Text("Verify OTP"),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildRoleDropdown(ThemeData theme) {
+    return DropdownButtonFormField<String>(
+      value: role,
+      hint: const Text("Select Your Role"),
+      decoration: InputDecoration(
+        prefixIcon: Icon(Icons.work_outline, size: 20),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+        filled: true,
+        fillColor: theme.colorScheme.surface.withAlpha(150),
+        contentPadding:
+            const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+      ),
+      items: const [
+        DropdownMenuItem(value: "user", child: Text("User")),
+        DropdownMenuItem(value: "parking_owner", child: Text("Parking Owner")),
+      ],
+      onChanged: (val) => setState(() => role = val),
+      validator: (value) => value == null ? "Please select a role" : null,
+    );
+  }
+
+  Widget _buildTermsAndConditions(ThemeData theme) {
+    return FormField<bool>(
+      validator: (value) {
+        if (!termsAccepted) {
+          return 'You must accept the terms and conditions.';
+        }
+        return null;
+      },
+      builder: (field) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Checkbox(
+                  value: termsAccepted,
+                  onChanged: (val) => setState(() => termsAccepted = val!),
+                ),
+                Expanded(
+                  child: Text.rich(
+                    TextSpan(
+                      text: "I agree to the ",
+                      style: theme.textTheme.bodyMedium,
+                      children: [
+                        TextSpan(
+                          text: "Terms of Service",
+                          style: TextStyle(
+                            color: theme.colorScheme.primary,
+                            decoration: TextDecoration.underline,
+                          ),
+                        ),
+                        const TextSpan(text: " and "),
+                        TextSpan(
+                          text: "Privacy Policy",
+                          style: TextStyle(
+                            color: theme.colorScheme.primary,
+                            decoration: TextDecoration.underline,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            if (field.hasError)
+              Padding(
+                padding: const EdgeInsets.only(left: 16.0, top: 4.0),
+                child: Text(
+                  field.errorText!,
+                  style:
+                      TextStyle(color: theme.colorScheme.error, fontSize: 12),
+                ),
+              )
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildCreateAccountButton() {
+    return FilledButton(
+      onPressed: isRegistering || isUploadingImage
+          ? null
+          : registerUser, // Calls your registerUser function
+      style: FilledButton.styleFrom(
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+      ),
+      child: isRegistering
+          ? const SizedBox(
+              width: 24,
+              height: 24,
+              child: CircularProgressIndicator(
+                  color: Colors.white, strokeWidth: 3),
+            )
+          : const Text("Create Account",
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+    );
+  }
+
+  Widget _buildSocialSignIn(bool isDarkMode) {
+    return Column(
+      children: [
+        const Row(
+          children: [
+            Expanded(child: Divider()),
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 8.0),
+              child: Text("OR"),
+            ),
+            Expanded(child: Divider()),
+          ],
+        ),
+        const SizedBox(height: 16),
+        OutlinedButton.icon(
+          onPressed: googleSignIn, // Calls your googleSignIn function
+          // NOTE: You must add a 'google_logo.png' to your assets folder
+          // and declare it in your pubspec.yaml file.
+          icon: Image.asset('assets/google_logo.png', height: 20),
+          label: const Text("Sign in with Google"),
+          style: OutlinedButton.styleFrom(
+            padding: const EdgeInsets.symmetric(vertical: 14),
+            minimumSize: const Size(double.infinity, 50),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            side:
+                BorderSide(color: isDarkMode ? Colors.white54 : Colors.black26),
+          ),
+        ),
+      ],
     );
   }
 }
