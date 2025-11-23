@@ -1,17 +1,10 @@
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:parking_app_flutter/views/profile/profile_view.dart';
-import 'package:parking_app_flutter/views/splash/splash_view.dart';
-<<<<<<< HEAD
-import 'package:lucide_icons/lucide_icons.dart';
-=======
 import 'package:parking_app_flutter/views/parking/show_nearby_parkings.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-import 'package:parking_app_flutter/views/profile/profile_view.dart';
-import 'package:geolocator/geolocator.dart';
->>>>>>> cd08386 (Signup UI , dashboard button to navigate show nearby parkings)
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:location/location.dart';
 
 // Main dashboard widget
 class Dashboard extends StatefulWidget {
@@ -42,17 +35,38 @@ class _ModernDashboardState extends State<Dashboard> {
   }
 
   Future<void> _findAndShowNearbyParkings() async {
-    // Show a loading indicator while we get the location
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Getting your location...")),
-    );
+    print("--- BUTTON PRESSED: _findAndShowNearbyParkings started ---");
+    // Initialize the location service instance
+    Location location = Location();
+    bool serviceEnabled;
+    PermissionStatus permissionGranted;
+    LocationData locationData;
+
+    // Show a loading indicator
+    // ScaffoldMessenger.of(context).showSnackBar(
+    //   const SnackBar(content: Text("Getting your location...")),
+    // );
 
     try {
-      // 1. Check for location permissions
-      LocationPermission permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission();
-        if (permission == LocationPermission.denied) {
+      // 1a. Check if location services are enabled (GPS/Network)
+      serviceEnabled = await location.serviceEnabled();
+      if (!serviceEnabled) {
+        serviceEnabled = await location.requestService();
+        if (!serviceEnabled) {
+          // Services still disabled after request
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Location services must be enabled.")),
+          );
+          return;
+        }
+      }
+
+      // 1b. Check for location permissions
+      permissionGranted = await location.hasPermission();
+      if (permissionGranted == PermissionStatus.denied) {
+        permissionGranted = await location.requestPermission();
+        if (permissionGranted != PermissionStatus.granted) {
+          // Permissions denied after request
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text("Location permissions are denied.")),
           );
@@ -61,23 +75,20 @@ class _ModernDashboardState extends State<Dashboard> {
       }
 
       // 2. Get current position
-      Position position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
-      );
+      // You can set location settings here if needed, e.g., location.changeSettings(...)
+      locationData = await location.getLocation();
 
       // 3. Navigate to the new screen with the location data
-      // Assuming you have a search controller, e.g., _searchController
-      // If not, you can pass a default name for the location.
-      String searchLocationName =
-          "Your Location"; // Replace with your search query if available
+      String searchLocationName = "Your Location";
 
       if (mounted) {
+        // NOTE: We use locationData.latitude and locationData.longitude
         Navigator.push(
           context,
           MaterialPageRoute(
             builder: (context) => ShowNearbyParkingsScreen(
-              lat: position.latitude,
-              lng: position.longitude,
+              lat: locationData.latitude!,
+              lng: locationData.longitude!,
               searchLocation: searchLocationName,
             ),
           ),
@@ -86,8 +97,7 @@ class _ModernDashboardState extends State<Dashboard> {
     } catch (e) {
       print("Error getting location: $e");
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text("Failed to get location. Please enable GPS.")),
+        SnackBar(content: Text("Failed to get location: ${e.toString()}")),
       );
     }
   }

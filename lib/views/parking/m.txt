@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-// Removed: import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 // --- DATA MODEL ---
@@ -260,12 +260,8 @@ class _ParkingCard extends StatelessWidget {
                   fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
           _buildInfoRow(
-              // Replaced FontAwesomeIcons.locationDot
-              Icons.location_on,
-              '${parking.distance} km away'),
-          _buildInfoRow(
-              // Replaced FontAwesomeIcons.squareParking
-              Icons.local_parking,
+              FontAwesomeIcons.locationDot, '${parking.distance} km away'),
+          _buildInfoRow(FontAwesomeIcons.squareParking,
               'Total Slots: ${parking.totalSlots}'),
           const Divider(color: Colors.grey, height: 24),
           const Text("Available Slots",
@@ -277,7 +273,7 @@ class _ParkingCard extends StatelessWidget {
               style: TextStyle(color: Colors.grey, fontSize: 16)),
           const SizedBox(height: 8),
           _buildFeaturesGrid(),
-          const SizedBox(height: 8),
+          const SizedBox(height: 16),
           const Spacer(),
           SizedBox(
             width: double.infinity,
@@ -311,26 +307,22 @@ class _ParkingCard extends StatelessWidget {
       ),
       children: [
         _SlotInfo(
-            // Replaced FontAwesomeIcons.motorcycle
-            icon: Icons.motorcycle,
+            icon: FontAwesomeIcons.motorcycle,
             label: "Bike",
             value: parking.bikeSlots,
             color: Colors.blue.shade300),
         _SlotInfo(
-            // Replaced FontAwesomeIcons.car
-            icon: Icons.directions_car,
+            icon: FontAwesomeIcons.car,
             label: "Sedan",
             value: parking.sedanSlots,
             color: Colors.green.shade400),
         _SlotInfo(
-            // Replaced FontAwesomeIcons.truck
-            icon: Icons.local_shipping,
+            icon: FontAwesomeIcons.truck,
             label: "Truck",
             value: parking.truckSlots,
             color: Colors.red.shade400),
         _SlotInfo(
-            // Replaced FontAwesomeIcons.bus
-            icon: Icons.directions_bus,
+            icon: FontAwesomeIcons.bus,
             label: "Bus",
             value: parking.busSlots,
             color: Colors.yellow.shade600),
@@ -351,18 +343,15 @@ class _ParkingCard extends StatelessWidget {
       children: [
         _FeatureInfo(
             label: "Charging",
-            // Replaced FontAwesomeIcons.chargingStation
-            icon: Icons.ev_station,
+            icon: FontAwesomeIcons.chargingStation,
             available: parking.evCharging),
         _FeatureInfo(
             label: "CCTV",
-            // Replaced FontAwesomeIcons.video
-            icon: Icons.videocam,
+            icon: FontAwesomeIcons.video,
             available: parking.cctvCamera),
         _FeatureInfo(
             label: "Washing",
-            // Replaced FontAwesomeIcons.shower
-            icon: Icons.local_car_wash,
+            icon: FontAwesomeIcons.shower,
             available: parking.washing),
       ],
     );
@@ -397,7 +386,7 @@ class _SlotInfo extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 8),
       decoration: BoxDecoration(
         border: Border.all(color: Colors.grey.shade700),
         borderRadius: BorderRadius.circular(6),
@@ -446,8 +435,8 @@ class _FeatureInfo extends StatelessWidget {
           const SizedBox(width: 4),
           Icon(
             available
-                ? Icons.check_circle // Replaced FontAwesomeIcons.checkCircle
-                : Icons.cancel, // Replaced FontAwesomeIcons.timesCircle
+                ? FontAwesomeIcons.checkCircle
+                : FontAwesomeIcons.timesCircle,
             color: available ? Colors.green.shade500 : Colors.red.shade400,
             size: 16,
           ),

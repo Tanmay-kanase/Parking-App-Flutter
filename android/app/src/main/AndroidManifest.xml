@@ -1,10 +1,11 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+<uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION"/>
+<uses-permission android:name="android.permission.INTERNET" />
+<uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <application
-<<<<<<< HEAD
-        android:label="Park Ease"
-=======
         android:label="parking_app"
->>>>>>> cd08386 (Signup UI , dashboard button to navigate show nearby parkings)
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
@@ -40,6 +41,15 @@
          https://developer.android.com/reference/android/content/Intent#ACTION_PROCESS_TEXT.
 
          In particular, this is used by the Flutter engine in io.flutter.plugin.text.ProcessTextPlugin. -->
+      <meta-data
+            android:name="flutterEmbedding"
+            android:value="2" />
+        <meta-data
+    android:name="firebase_messaging_auto_init_enabled"
+    android:value="true" />
+<meta-data
+    android:name="firebase_analytics_collection_enabled"
+    android:value="false" />
     <queries>
         <intent>
             <action android:name="android.intent.action.PROCESS_TEXT"/>
@@ -47,3 +57,4 @@
         </intent>
     </queries>
 </manifest>
+

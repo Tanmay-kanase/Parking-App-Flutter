@@ -3,8 +3,6 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -375,11 +373,7 @@ class _SignupScreenState extends State<SignupScreen> {
         );
 
         // Navigate to home
-<<<<<<< HEAD
         Navigator.pushReplacementNamed(context, AppRoutes.dashboard);
-=======
-        Navigator.pushReplacementNamed(context, "/dashboard");
->>>>>>> cd08386 (Signup UI , dashboard button to navigate show nearby parkings)
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -414,89 +408,6 @@ class _SignupScreenState extends State<SignupScreen> {
                   validator: (value) =>
                       value!.isEmpty ? "Please enter your full name" : null,
                 ),
-<<<<<<< HEAD
-                validator: (value) =>
-                    value!.isEmpty ? "Please enter your full name" : null,
-              ),
-              SizedBox(height: 15),
-
-              // Profile Image Picker
-
-              Row(
-                children: [
-                  ElevatedButton(
-                    onPressed: pickImage,
-                    child: Text("Pick Profile Image"),
-                  ),
-                  // SizedBox(width: 10),
-                  // profileImage != null
-                  //     ? Text(profileImage!.path.split('/').last)
-                  //     : Text("No file chosen"),
-                ],
-              ),
-              if (isUploadingImage)
-                LinearProgressIndicator(value: uploadProgress / 100),
-              SizedBox(height: 15),
-              ElevatedButton(
-                onPressed: debugUploadCheck,
-                child: Text("Test Upload"),
-              ),
-
-              // Email + OTP
-              Row(
-                children: [
-                  Expanded(
-                    child: TextFormField(
-                      controller: emailController,
-                      decoration: InputDecoration(
-                        labelText: "Email",
-                        prefixIcon: Icon(Icons.email),
-                      ),
-                      enabled: !otpVerified && !isSendingOtp && !isVerifyingOtp,
-                      validator: (value) =>
-                          value!.isEmpty ? "Please enter email" : null,
-                    ),
-                  ),
-                  SizedBox(width: 10),
-                  ElevatedButton(
-                    onPressed: otpVerified || isSendingOtp || isVerifyingOtp
-                        ? null
-                        : sendOtp,
-                    child: isSendingOtp
-                        ? CircularProgressIndicator(color: Colors.white)
-                        : Text(otpVerified ? "Verified" : "Send OTP"),
-                  ),
-                ],
-              ),
-              SizedBox(height: 10),
-
-              if (otpVisible && !otpVerified)
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextFormField(
-                        controller: otpController,
-                        decoration: InputDecoration(labelText: "Enter OTP"),
-                      ),
-                    ),
-                    SizedBox(width: 10),
-                    ElevatedButton(
-                      onPressed:
-                          isVerifyingOtp || isSendingOtp ? null : verifyOtp,
-                      child: isVerifyingOtp
-                          ? CircularProgressIndicator(color: Colors.white)
-                          : Text("Verify OTP"),
-                    ),
-                  ],
-                ),
-              SizedBox(height: 15),
-
-              // Password
-              TextFormField(
-                controller: passwordController,
-                obscureText: true,
-                decoration: InputDecoration(
-=======
                 const SizedBox(height: 16),
                 _buildEmailAndOtpSection(),
                 if (otpVisible && !otpVerified) ...[
@@ -506,7 +417,6 @@ class _SignupScreenState extends State<SignupScreen> {
                 const SizedBox(height: 16),
                 _buildTextFormField(
                   controller: passwordController,
->>>>>>> cd08386 (Signup UI , dashboard button to navigate show nearby parkings)
                   labelText: "Password",
                   prefixIcon: Icons.lock_outline,
                   obscureText: true,
