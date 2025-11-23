@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:parking_app_flutter/views/booking/my_booking_screen.dart';
 import 'package:parking_app_flutter/views/profile/profile_view.dart';
 import 'package:parking_app_flutter/views/parking/show_nearby_parkings.dart';
 import 'package:lucide_icons/lucide_icons.dart';
@@ -369,8 +370,8 @@ class _ModernDashboardState extends State<Dashboard> {
     switch (index) {
       // case 0:
       //   return ProfileView();
-      // case 1:
-      //   return const BookingView();
+      case 1:
+        return const MyBookingsScreen();
       // case 2:
       //   return const History(); // 👈 navigate to Profile
 
