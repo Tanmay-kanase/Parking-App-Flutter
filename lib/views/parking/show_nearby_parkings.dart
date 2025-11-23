@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 // Removed: import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:parking_app_flutter/views/booking/do_booking_screen.dart';
 
 // --- DATA MODEL ---
 // A model to safely handle the parking data from the API
@@ -169,7 +170,7 @@ class _ShowNearbyParkingsScreenState extends State<ShowNearbyParkingsScreen> {
   void _handleBooking(String parkingId, String name) {
     // Navigate to your booking screen, passing the required data
     // Example:
-    // Navigator.push(context, MaterialPageRoute(builder: (_) => DoBookingScreen(locationId: parkingId, name: name)));
+    Navigator.push(context, MaterialPageRoute(builder: (_) => DoBookingScreen(locationId: parkingId, name: name)));
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text("Navigate to book for: $name (ID: $parkingId)")),
     );
